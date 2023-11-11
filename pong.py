@@ -1,4 +1,5 @@
 import pygame, sys, random
+from enum import Enum
 
 class Block(pygame.sprite.Sprite):
     def __init__ (self,path,x_pos,y_pos):
@@ -95,7 +96,7 @@ class Opponent(Block):
         if self.rect.bottom > ball_group.sprite.rect.y:
             self.rect.y -= self.speed * 2
         self.constrain()
-
+        
     def constrain(self):
         if self.rect.top <= 0: self.rect.top = 0
         if self.rect.bottom >= screen_height: self.rect.bottom = screen_height
@@ -106,15 +107,60 @@ class GameManager:
         self.opponent_score = 0
         self.ball_group = ball_group
         self.paddle_group = paddle_group
+        self.game_state = GameState.MAIN_MENU
 
     def run_game(self):
-        self.paddle_group.draw(screen)
-        self.ball_group.draw(screen)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
 
-        self.paddle_group.update(self.ball_group)
-        self.ball_group.update()
-        self.reset_ball()
-        self.draw_score()
+                keys = pygame.key.get_pressed()
+
+                if self.game_state == GameState.MAIN_MENU:
+                    if keys[pygame.K_RETURN]:
+                        self.game_state = GameState.PLAYING
+
+                elif self.game_state == GameState.PLAYING:       
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_DOWN:
+                            player.movement += player.speed
+                        if event.key == pygame.K_UP:
+                            player.movement -= player.speed
+                    if event.type == pygame.KEYUP:
+                        if event.key == pygame.K_DOWN:
+                            player.movement -= player.speed
+                        if event.key == pygame.K_UP:
+                            player.movement += player.speed
+
+            
+            screen.fill(bg_color)
+            pygame.draw.rect(screen,accent_color,middle_strip)
+            pygame.draw.rect(screen,accent_color,player)
+            pygame.draw.rect(screen,accent_color,opponent)
+            pygame.draw.ellipse(screen,accent_color,ball)
+            pygame.draw.aaline(screen, accent_color, (screen_width/2,0), (screen_width/2,screen_height))
+
+            if self.game_state == GameState.MAIN_MENU:
+                menu_text = basic_font.render("Press Enter to Play", True, grey)
+                menu_rect = menu_text.get_rect(center=(screen_width / 2, screen_height / 2))
+                screen.blit(menu_text, menu_rect)
+                
+            elif self.game_state == GameState.PLAYING:
+                self.paddle_group.draw(screen)
+                self.ball_group.draw(screen)
+
+                self.paddle_group.update(self.ball_group)
+                self.ball_group.update()
+                self.reset_ball()
+                self.draw_score()
+
+            if game_manager.player_score == 10 or game_manager.opponent_score == 10:
+                self.game_over()
+
+            pygame.display.flip()
+            clock.tick(60)
 
     def reset_ball(self):
         if self.ball_group.sprite.rect.right >= screen_width:
@@ -133,7 +179,49 @@ class GameManager:
 
         screen.blit(player_score,player_score_rect)
         screen.blit(opponent_score,opponent_score_rect)
-    
+
+    def game_over(self):
+        winner_text = ""
+        if self.player_score > self.opponent_score:
+            winner_text = "Opponent Wins!"
+        elif self.player_score < self.opponent_score:
+            winner_text = "Player Wins!"
+
+        game_over_text = basic_font.render(winner_text, True, grey)
+        game_over_rect = game_over_text.get_rect(center=(screen_width / 2, screen_height / 2 - 50))
+
+        restart_text = basic_font.render("Press R to Restart", True, grey)
+        restart_rect = restart_text.get_rect(center=(screen_width / 2, screen_height / 2 + 20))
+
+        quit_text = basic_font.render("Press Q to Quit", True, grey)
+        quit_rect = quit_text.get_rect(center=(screen_width / 2, screen_height / 2 + 80))
+
+        screen.blit(game_over_text, game_over_rect)
+        screen.blit(restart_text, restart_rect)
+        screen.blit(quit_text, quit_rect)
+
+        pygame.display.flip()
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_r:
+                        self.player_score = 0
+                        self.opponent_score = 0
+                        self.ball_group.sprite.reset_ball()
+                        self.game_state = GameState.PLAYING
+                        return
+                    elif event.key == pygame.K_q:
+                        pygame.quit()
+                        sys.exit()
+
+class GameState(Enum):
+    MAIN_MENU = 1
+    PLAYING = 2
+ 
 pygame.mixer.pre_init(44100,-16,2,512)
 pygame.init()
 clock = pygame.time.Clock()
@@ -145,6 +233,7 @@ pygame.display.set_caption('pong')
 
 bg_color = pygame.Color('#2F373F')
 accent_color = (27,35,43)
+grey = (128,128,128)
 basic_font = pygame.font.Font("freesansbold.ttf",32)
 pong_sound = pygame.mixer.Sound("pong.ogg")
 score_sound = pygame.mixer.Sound("score.ogg")
@@ -162,31 +251,4 @@ ball_sprite.add(ball)
 
 game_manager = GameManager(ball_sprite,paddle_group)
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_DOWN:
-                player.movement += player.speed
-            if event.key == pygame.K_UP:
-                player.movement -= player.speed
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_DOWN:
-                player.movement -= player.speed
-            if event.key == pygame.K_UP:
-                player.movement += player.speed
-
-    
-    screen.fill(bg_color)
-    pygame.draw.rect(screen,accent_color,middle_strip)
-    pygame.draw.rect(screen,accent_color,player)
-    pygame.draw.rect(screen,accent_color,opponent)
-    pygame.draw.ellipse(screen,accent_color,ball)
-    pygame.draw.aaline(screen, accent_color, (screen_width/2,0), (screen_width/2,screen_height))
-
-    game_manager.run_game()
-
-    pygame.display.flip()
-    clock.tick(60)
+game_manager.run_game()
