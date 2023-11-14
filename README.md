@@ -1,7 +1,6 @@
 # Pong
 # README.md generator script
 
-content = """
 # Pong Game
 
 A simple Pong game implemented in Python using the Pygame library.
@@ -30,11 +29,3 @@ A simple Pong game implemented in Python using the Pygame library.
 1. Install Python from [python.org](https://www.python.org/).
 2. Install Pygame using `pip install pygame`.
 3. Run the game script: `python pong.py`.
-
-"""
-
-# Write content to README.md file
-with open("README.md", "w") as readme_file:
-    readme_file.write(content)
-
-print("README.md generated successfully.")
