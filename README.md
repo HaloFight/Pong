@@ -21,7 +21,7 @@ A simple Pong game implemented in Python using the Pygame library.
 
 ## Dependencies
 
-- Python 3.x
+- Python 3.10.5
 - Pygame library
 
 ## How to Run
